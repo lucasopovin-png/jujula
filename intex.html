@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ToyPlanet — Plantilla</title>
+  <style>
+    :root{
+      --bg:#f7f7fb;
+      --card:#ffffff;
+      --muted:#666;
+      --accent: #f7d77a; /* fallback */
+      --line-thickness: 10px;
+      --max-width:1200px;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);margin:0;color:#222}
+    header{background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(255,255,255,0.7));position:sticky;top:0;z-index:10;padding:12px;border-bottom:1px solid #eee}
+    .container{max-width:var(--max-width);margin:0 auto;padding:16px}
+    .top-row{display:flex;align-items:center;gap:16px}
+    .logo-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
+    .logo{width:180px;height:60px;background:linear-gradient(135deg,#eee,#ddd);display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:700}
+    .logo img{max-width:100%;max-height:100%;object-fit:contain}
+    .logo input[type=file]{display:none}
+    .line{height:var(--line-thickness);width:100%;border-radius:8px;margin-top:10px}
+
+    /* search */
+    .search-bar{display:flex;align-items:center;gap:8px;flex:2}
+    .search-bar input[type=search]{flex:1;padding:12px;border-radius:8px;border:1px solid #ddd;font-size:16px}
+    .search-bar button{padding:10px 14px;border-radius:8px;border:0;background:#007bff;color:white;font-weight:600}
+
+    /* main area */
+    main{padding:18px}
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:white;cursor:pointer}
+
+    /* product grid */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+    .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:8px;min-height:220px;position:relative}
+    .card .thumb{height:120px;background:#f0f0f3;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .card .thumb img{width:100%;height:100%;object-fit:cover}
+    .card h4{margin:0;font-size:16px}
+    .card p{margin:0;color:var(--muted);font-size:13px}
+    .card .actions{display:flex;gap:8px;margin-top:auto}
+    .select-overlay{position:absolute;inset:8px;border-radius:10px;border:3px dashed transparent;pointer-events:none}
+    .card.selected .select-overlay{border-color:#007bff}
+
+    /* modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:20}
+    .modal .sheet{width:480px;max-width:95%;background:white;padding:16px;border-radius:10px}
+    .row{display:flex;gap:8px;align-items:center}
+    label{font-size:13px;color:#333}
+    input[type=text],textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #ddd}
+    input[type=file]{display:block}
+
+    /* FAQ */
+    .faq{margin-top:18px}
+    .faq-item{background:var(--card);padding:12px;border-radius:10px;margin-bottom:8px}
+    .faq-item h5{margin:0}
+    .faq-item p{margin:6px 0 0;color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:720px){
+      .top-row{flex-direction:column;align-items:stretch}
+      .search-bar{order:2}
+      .logo-wrap{order:1}
+    }
+
+    /* small helpers */
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container top-row">
+      <div class="logo-wrap">
+        <div class="logo" id="logoArea">ToyPlanet
+          <!-- If user uploads a logo we will show it here -->
+        </div>
+        <div style="margin-top:6px;display:flex;gap:8px;align-items:center;width:100%">
+          <label class="btn" for="logoUpload">Subir logo</label>
+          <input id="logoUpload" type="file" accept="image/*" />
+          <button class="btn" id="resetLogo">Reset logo</button>
+        </div>
+        <div id="colorLine" class="line" aria-hidden="true"></div>
+      </div>
+
+      <div class="search-bar">
+        <input type="search" id="searchInput" placeholder="Buscar juguetes, marcas, categorías..." />
+        <button id="searchBtn">Buscar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="controls">
+      <button class="btn" id="addCard">+ Añadir casilla</button>
+      <button class="btn" id="exportBtn">Exportar (JSON)</button>
+      <button class="btn" id="importBtn">Importar (JSON)</button>
+      <input type="file" id="importFile" style="display:none" accept="application/json" />
+      <div style="margin-left:auto;color:var(--muted)">Pulsá una casilla para seleccionar / deseleccionar.</div>
+    </div>
+
+    <section id="productArea" class="grid" aria-live="polite">
+      <!-- cards will be inserted here -->
+    </section>
+
+    <section class="faq">
+      <h3>Preguntas frecuentes (FAQ)</h3>
+      <div id="faqList">
+        <!-- faq items -->
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn" id="addFaq">+ Añadir pregunta</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- modal for editing card -->
+  <div id="modal" class="modal">
+    <div class="sheet">
+      <h3 id="modalTitle">Editar casilla</h3>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <div style="flex:1">
+          <label>Imagen</label>
+          <input type="file" id="cardImageInput" accept="image/*" />
+        </div>
+        <div style="width:140px;text-align:center">
+          <div id="previewSmall" style="width:120px;height:80px;background:#f0f0f3;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden">Preview</div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <label>Título</label>
+        <input type="text" id="cardTitle" />
+      </div>
+      <div style="margin-bottom:8px">
+        <label>Subtexto</label>
+        <input type="text" id="cardSubtitle" />
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" id="closeModal">Cancelar</button>
+        <button class="btn" id="saveModal">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /***** Simple client-side store *******/
+     - All data saved in localStorage under key toyplanet.data
+     - Cards: array of {id,title,subtitle,imageDataUrl,selected}
+     - FAQ: array of {id,q,a}
+     - Logo stored as toyplanet.logo
+    ******************/
+
+    const STORE_KEY = 'toyplanet.data.v1';
+    const LOGO_KEY = 'toyplanet.logo.v1';
+
+    // Initial demo data
+    const defaultState = {
+      cards: Array.from({length:6}).map((_,i)=>({
+        id: 'c'+i,
+        title: 'Juguete '+(i+1),
+        subtitle: 'Descripción corta',
+        image: '',
+        selected: false
+      })),
+      faq: [
+        {id:'f1',q:'¿Cómo hago un pedido?',a:'Agregá productos al carrito y seguí el proceso de pago.'},
+        {id:'f2',q:'¿Hacen envíos?',a:'Sí, enviamos a todo el país según tarifa.'}
+      ]
+    };
+
+    function saveState(state){localStorage.setItem(STORE_KEY,JSON.stringify(state))}
+    function loadState(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||defaultState}catch(e){return defaultState}}
+
+    // random pastel line color each refresh 1/3 chance each
+    function pickLineColor(){
+      const colors = ['#ffd78a','#ffd0d0','#cfe8ff']; // pastel yellow, red-ish, blue
+      const picked = colors[Math.floor(Math.random()*colors.length)];
+      document.documentElement.style.setProperty('--accent',picked);
+      document.getElementById('colorLine').style.background = picked;
+    }
+
+    // render
+    function render(){
+      const state = loadState();
+      const productArea = document.getElementById('productArea');
+      productArea.innerHTML = '';
+      state.cards.forEach(card=>{
+        const el = document.createElement('article');
+        el.className = 'card'+(card.selected?' selected':'');
+        el.dataset.id = card.id;
+        el.innerHTML = `
+          <div class="select-overlay"></div>
+          <div class="thumb">${card.image?'<img src="'+card.image+'" alt="'+escapeHtml(card.title)+'">':'<span class="muted">Agregar imagen</span>'}</div>
+          <h4>${escapeHtml(card.title||'Sin título')}</h4>
+          <p>${escapeHtml(card.subtitle||'')}</p>
+          <div class="actions">
+            <button class="btn editBtn">Editar</button>
+            <button class="btn toggleBtn">Seleccionar</button>
+          </div>
+        `;
+        // click select toggles
+        el.querySelector('.toggleBtn').addEventListener('click',()=>{
+          card.selected = !card.selected; saveState(state); render();
+        });
+        el.querySelector('.editBtn').addEventListener('click',()=>openEditModal(card.id));
+        productArea.appendChild(el);
+      });
+
+      // FAQ
+      const faqList = document.getElementById('faqList'); faqList.innerHTML='';
+      state.faq.forEach(item=>{
+        const box = document.createElement('div'); box.className='faq-item'; box.dataset.id=item.id;
+        box.innerHTML = <div style="display:flex;justify-content:space-between;align-items:center"><h5>${escapeHtml(item.q)}</h5><div><button class='btn editFaq'>Editar</button> <button class='btn delFaq'>Eliminar</button></div></div><p>${escapeHtml(item.a)}</p>;
+        box.querySelector('.editFaq').addEventListener('click',()=>editFaq(item.id));
+        box.querySelector('.delFaq').addEventListener('click',()=>{ if(confirm('Eliminar pregunta?')){ const s=loadState(); s.faq = s.faq.filter(f=>f.id!==item.id); saveState(s); render(); } });
+        faqList.appendChild(box);
+      });
+    }
+
+    function escapeHtml(s){ if(!s) return ''; return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]) }
+
+    // modal logic
+    let modalEditingId = null;
+    const modal = document.getElementById('modal');
+    const cardTitle = document.getElementById('cardTitle');
+    const cardSubtitle = document.getElementById('cardSubtitle');
+    const cardImageInput = document.getElementById('cardImageInput');
+    const preview = document.getElementById('previewSmall');
+
+    function openEditModal(id){
+      const state = loadState();
+      const card = state.cards.find(c=>c.id===id);
+      if(!card) return;
+      modalEditingId = id; cardTitle.value = card.title; cardSubtitle.value = card.subtitle; preview.innerHTML = card.image?('<img src="'+card.image+'" style="width:100%;height:100%;object-fit:cover">'):'Preview';
+      modal.style.display='flex';
+    }
+    document.getElementById('closeModal').addEventListener('click',()=>{modal.style.display='none'; modalEditingId=null; cardImageInput.value=''});
+    document.getElementById('saveModal').addEventListener('click',()=>{
+      const state = loadState(); const card = state.cards.find(c=>c.id===modalEditingId);
+      if(!card) return;
+      card.title = cardTitle.value; card.subtitle = cardSubtitle.value;
+      // if a new file was chosen, we will have set a temp variable
+      if(cardImageInput._dataUrl) card.image = cardImageInput._dataUrl;
+      saveState(state); modal.style.display='none'; modalEditingId=null; cardImageInput.value=''; render();
+    });
+
+    cardImageInput.addEventListener('change', ev=>{
+      const f = ev.target.files && ev.target.files[0]; if(!f) return; const reader = new FileReader(); reader.onload = e=>{ cardImageInput._dataUrl = e.target.result; preview.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover">'; } ; reader.readAsDataURL(f);
+    });
+
+    // logo upload
+    const logoUpload = document.getElementById('logoUpload');
+    const logoArea = document.getElementById('logoArea');
+    document.querySelector('label[for="logoUpload"]').addEventListener('click',()=>logoUpload.click());
+    logoUpload.addEventListener('change',ev=>{
+      const f = ev.target.files && ev.target.files[0]; if(!f) return; const r = new FileReader(); r.onload=e=>{ localStorage.setItem(LOGO_KEY,e.target.result); renderLogo(); } ; r.readAsDataURL(f);
+    });
+    document.getElementById('resetLogo').addEventListener('click',()=>{ localStorage.removeItem(LOGO_KEY); renderLogo(); });
+
+    function renderLogo(){ const data = localStorage.getItem(LOGO_KEY); if(data){ logoArea.innerHTML = '<img src="'+data+'" alt="logo">'; } else { logoArea.innerHTML = 'ToyPlanet'; } }
+
+    // add card
+    document.getElementById('addCard').addEventListener('click',()=>{
+      const s = loadState(); const id = 'c'+Date.now(); s.cards.push({id,title:'Nuevo juguete',subtitle:'Subtexto',image:'',selected:false}); saveState(s); render();
+    });
+
+    // export / import
+    document.getElementById('exportBtn').addEventListener('click',()=>{
+      const s = loadState(); const blob = new Blob([JSON.stringify(s, null, 2)],{type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='toyplanet-export.json'; a.click(); URL.revokeObjectURL(url);
+    });
+    document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change',ev=>{
+      const f = ev.target.files && ev.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=e=>{ try{ const obj = JSON.parse(e.target.result); saveState(obj); render(); alert('Importado con éxito'); }catch(err){ alert('JSON inválido') } } ; r.readAsText(f);
+    });
+
+    // FAQ editing
+    document.getElementById('addFaq').addEventListener('click',()=>{
+      const q = prompt('Ingresá la pregunta:'); if(!q) return; const a = prompt('Ingresá la respuesta:')||''; const s=loadState(); s.faq.push({id:'f'+Date.now(),q,a}); saveState(s); render();
+    });
+    function editFaq(id){ const s=loadState(); const item = s.faq.find(f=>f.id===id); if(!item) return; const q = prompt('Editar pregunta:',item.q); if(q===null) return; const a = prompt('Editar respuesta:',item.a); if(a===null) return; item.q=q; item.a=a; saveState(s); render(); }
+
+    // search (client-side filter)
+    document.getElementById('searchBtn').addEventListener('click',()=>{
+      const q = document.getElementById('searchInput').value.toLowerCase().trim(); const s=loadState(); if(!q){ render(); return; }
+      const filtered = s.cards.filter(c=> (c.title||'').toLowerCase().includes(q) || (c.subtitle||'').toLowerCase().includes(q));
+      const productArea = document.getElementById('productArea'); productArea.innerHTML='';
+      filtered.forEach(card=>{
+        const el = document.createElement('article'); el.className='card'+(card.selected?' selected':''); el.dataset.id=card.id; el.innerHTML=<div class="select-overlay"></div><div class="thumb">${card.image?'<img src="'+card.image+'">':'<span class="muted">Agregar imagen</span>'}</div><h4>${escapeHtml(card.title)}</h4><p>${escapeHtml(card.subtitle)}</p><div class="actions"><button class="btn editBtn">Editar</button><button class="btn toggleBtn">Seleccionar</button></div>;
+        el.querySelector('.toggleBtn').addEventListener('click',()=>{ card.selected=!card.selected; saveState(s); render(); });
+        el.querySelector('.editBtn').addEventListener('click',()=>openEditModal(card.id)); productArea.appendChild(el);
+      });
+    });
+
+    // small helper to initialize demo
+    function ensureInitial(){ if(!localStorage.getItem(STORE_KEY)) saveState(defaultState); }
+
+    // on load
+    pickLineColor(); ensureInitial(); render(); renderLogo();
+
+    // pick new random line color on each new page load
+    // (we already call pickLineColor on load). If you want 1/3 distribution per refresh this code does it.
+
+    // small accessibility: close modal with ESC
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ modal.style.display='none'; modalEditingId=null; } });
+
+    // utility: allow editing cards' image via drag & drop into card area (optional)
+    // not implemented to keep simple
+
+  </script>
+</body>
+</html>
